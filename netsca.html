@@ -1,0 +1,2360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nmap Pro - Network Scanner Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-tertiary: #334155;
+      --bg-card: #1e293b;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent-primary: #3b82f6;
+      --accent-secondary: #6366f1;
+      --accent-success: #10b981;
+      --accent-warning: #f59e0b;
+      --accent-danger: #ef4444;
+      --accent-info: #06b6d4;
+      --border-color: #334155;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+      --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow: hidden;
+    }
+
+    .app-container {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 260px;
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      padding: 20px 0;
+      flex-shrink: 0;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 24px 24px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 16px;
+    }
+
+    .logo-icon {
+      font-size: 28px;
+    }
+
+    .logo h2 {
+      font-size: 20px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .nav-menu {
+      flex: 1;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: all 0.2s;
+      text-align: left;
+      width: 100%;
+      margin: 0 12px;
+      width: calc(100% - 24px);
+    }
+
+    .nav-item:hover {
+      background: rgba(59, 130, 246, 0.1);
+      color: var(--text-primary);
+    }
+
+    .nav-item.active {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(99, 102, 241, 0.15));
+      color: var(--accent-primary);
+      border-left: 3px solid var(--accent-primary);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      margin-left: 0;
+      width: calc(100% - 12px);
+      padding-left: 28px;
+    }
+
+    .nav-icon { font-size: 18px; }
+
+    .sidebar-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-success);
+      box-shadow: 0 0 8px var(--accent-success);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 32px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .top-bar h1 {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border-radius: var(--radius-sm);
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      color: white;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-secondary {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      background: var(--border-color);
+    }
+
+    .btn-danger {
+      background: var(--accent-danger);
+      color: white;
+    }
+
+    .btn-sm { padding: 6px 14px; font-size: 13px; }
+
+    /* Tab Content */
+    .tab-content {
+      display: none;
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 32px;
+    }
+
+    .tab-content.active { display: block; }
+
+    /* Cards */
+    .scan-builder {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      max-width: 1000px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      background: rgba(30, 41, 59, 0.8);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .card-header h3 {
+      font-size: 16px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-body { padding: 20px; }
+
+    .form-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .form-input {
+      padding: 10px 14px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+
+    .form-input:focus {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .input-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Toggle Switch */
+    .toggle-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      cursor: pointer;
+    }
+
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: var(--bg-tertiary);
+      border-radius: 24px;
+      transition: 0.3s;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background: var(--accent-primary);
+    }
+
+    .toggle-switch input:checked + .toggle-slider::before {
+      transform: translateX(20px);
+    }
+
+    .toggle-label {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    /* Option Cards */
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    .option-card {
+      position: relative;
+      padding: 16px;
+      background: var(--bg-primary);
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: block;
+    }
+
+    .option-card:hover {
+      border-color: var(--accent-primary);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+    }
+
+    .option-card.active {
+      border-color: var(--accent-primary);
+      background: rgba(59, 130, 246, 0.1);
+    }
+
+    .option-card input { position: absolute; opacity: 0; }
+
+    .option-title {
+      font-weight: 600;
+      font-size: 14px;
+      margin-bottom: 4px;
+      color: var(--text-primary);
+    }
+
+    .option-desc {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .badge-recommended {
+      background: var(--accent-success);
+      color: white;
+    }
+
+    /* Checkbox Cards */
+    .checkbox-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    .check-card {
+      position: relative;
+      padding: 16px;
+      background: var(--bg-primary);
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: block;
+    }
+
+    .check-card:hover { border-color: var(--accent-primary); }
+
+    .check-card.active {
+      border-color: var(--accent-primary);
+      background: rgba(59, 130, 246, 0.1);
+    }
+
+    .check-card input { position: absolute; opacity: 0; }
+
+    .check-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border-color);
+      border-radius: 4px;
+      margin-bottom: 8px;
+      font-size: 12px;
+      color: transparent;
+      transition: all 0.2s;
+    }
+
+    .check-card.active .check-icon {
+      background: var(--accent-primary);
+      border-color: var(--accent-primary);
+      color: white;
+    }
+
+    .check-title {
+      font-weight: 600;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .check-desc {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    /* Script Chips */
+    .script-categories {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .script-chip {
+      padding: 8px 16px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .script-chip:hover { border-color: var(--accent-primary); }
+
+    .script-chip.active {
+      background: var(--accent-primary);
+      border-color: var(--accent-primary);
+      color: white;
+    }
+
+    .script-chip input { position: absolute; opacity: 0; }
+
+    /* Timing Selector */
+    .timing-selector {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .timing-option {
+      flex: 1;
+      min-width: 120px;
+      padding: 16px;
+      background: var(--bg-primary);
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .timing-option:hover { border-color: var(--accent-primary); }
+
+    .timing-option.active {
+      border-color: var(--accent-primary);
+      background: rgba(59, 130, 246, 0.1);
+    }
+
+    .timing-name {
+      font-weight: 600;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .timing-speed { font-size: 24px; margin: 4px 0; }
+
+    .timing-desc {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    /* Command Preview */
+    .command-preview-card {
+      position: sticky;
+      bottom: 20px;
+      background: var(--bg-secondary);
+      border: 2px solid var(--accent-primary);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow-lg);
+      margin-top: 20px;
+    }
+
+    .command-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .command-header h3 {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .command-box {
+      background: #0a0f1a;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      font-family: 'Fira Code', 'Courier New', monospace;
+      font-size: 14px;
+      color: var(--accent-success);
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .command-meta {
+      display: flex;
+      gap: 12px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .meta-tag {
+      padding: 4px 12px;
+      background: var(--bg-tertiary);
+      border-radius: 12px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* Info Panels */
+    .info-panel h2 {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+
+    .panel-desc {
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 20px;
+    }
+
+    .info-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 24px;
+      position: relative;
+      transition: all 0.2s;
+    }
+
+    .info-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--accent-primary);
+    }
+
+    .info-card.featured {
+      border-color: var(--accent-success);
+      background: rgba(16, 185, 129, 0.05);
+    }
+
+    .info-icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+    }
+
+    .info-card h4 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .info-card p {
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 12px;
+    }
+
+    .info-card code {
+      display: block;
+      background: var(--bg-primary);
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      font-family: 'Fira Code', monospace;
+      font-size: 13px;
+      color: var(--accent-info);
+      border-left: 3px solid var(--accent-primary);
+      overflow-x: auto;
+    }
+
+    /* Results */
+    .results-container { max-width: 1200px; }
+
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .results-actions { display: flex; gap: 12px; }
+
+    .results-placeholder, .history-empty {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--text-secondary);
+    }
+
+    .placeholder-icon { font-size: 64px; margin-bottom: 16px; }
+
+    .results-placeholder h3, .history-empty h3 {
+      font-size: 20px;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .results-summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .summary-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 24px;
+      text-align: center;
+    }
+
+    .summary-value {
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--accent-primary);
+    }
+
+    .summary-label {
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
+    .results-table-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .results-table th {
+      background: var(--bg-tertiary);
+      padding: 14px 16px;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+    }
+
+    .results-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 14px;
+    }
+
+    .results-table tr:hover {
+      background: rgba(59, 130, 246, 0.05);
+    }
+
+    .host-state {
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .state-up { background: rgba(16, 185, 129, 0.2); color: var(--accent-success); }
+    .state-down { background: rgba(239, 68, 68, 0.2); color: var(--accent-danger); }
+    .state-filtered { background: rgba(245, 158, 11, 0.2); color: var(--accent-warning); }
+
+    .service-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      background: var(--bg-tertiary);
+      border-radius: 4px;
+      font-size: 11px;
+      margin: 2px;
+    }
+
+    .action-btn {
+      padding: 6px 12px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .action-btn:hover {
+      background: var(--accent-primary);
+      border-color: var(--accent-primary);
+    }
+
+    /* History */
+    .history-container { max-width: 1000px; }
+
+    .history-list { display: flex; flex-direction: column; gap: 12px; }
+
+    .history-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s;
+    }
+
+    .history-item:hover {
+      border-color: var(--accent-primary);
+      transform: translateX(4px);
+    }
+
+    .history-info h4 {
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+
+    .history-meta {
+      display: flex;
+      gap: 16px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .history-status {
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .status-completed { background: rgba(16, 185, 129, 0.2); color: var(--accent-success); }
+    .status-failed { background: rgba(239, 68, 68, 0.2); color: var(--accent-danger); }
+    .status-running { background: rgba(59, 130, 246, 0.2); color: var(--accent-primary); }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      backdrop-filter: blur(4px);
+    }
+
+    .modal {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      width: 90%;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 24px;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .modal-close:hover { color: var(--text-primary); }
+
+    .modal-body { padding: 20px; overflow-y: auto; }
+
+    .modal-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .scan-target {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+
+    .progress-bar-container {
+      height: 8px;
+      background: var(--bg-tertiary);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+      border-radius: 4px;
+      transition: width 0.3s;
+    }
+
+    .scan-status {
+      font-size: 14px;
+      color: var(--accent-primary);
+      margin-bottom: 16px;
+      font-weight: 500;
+    }
+
+    .scan-log {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      height: 160px;
+      overflow-y: auto;
+      font-family: 'Fira Code', monospace;
+      font-size: 12px;
+      margin-bottom: 16px;
+    }
+
+    .log-line { padding: 2px 0; color: var(--text-secondary); }
+    .log-line.warn { color: var(--accent-warning); }
+    .log-line.success { color: var(--accent-success); }
+    .log-line.error { color: var(--accent-danger); }
+
+    .scan-stats {
+      display: flex;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .stat { display: flex; align-items: center; gap: 4px; }
+    .stat-label { color: var(--text-secondary); }
+    .stat-value { color: var(--text-primary); font-weight: 600; }
+
+    .detail-modal { max-width: 700px; }
+
+    .host-detail-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .host-detail-icon {
+      width: 56px;
+      height: 56px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+    }
+
+    .host-detail-info h3 { font-size: 20px; margin-bottom: 4px; }
+    .host-detail-info p { color: var(--text-secondary); font-size: 14px; }
+
+    .detail-section { margin-bottom: 24px; }
+    .detail-section h4 {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .port-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .port-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 16px;
+      background: var(--bg-primary);
+      border-radius: var(--radius-sm);
+      border-left: 3px solid var(--accent-success);
+    }
+
+    .port-item.filtered { border-left-color: var(--accent-warning); }
+    .port-item.closed { border-left-color: var(--accent-danger); }
+
+    .port-number {
+      font-family: 'Fira Code', monospace;
+      font-weight: 600;
+      font-size: 16px;
+      min-width: 60px;
+    }
+
+    .port-service { flex: 1; }
+    .port-service-name { font-weight: 600; }
+    .port-service-version { font-size: 12px; color: var(--text-secondary); }
+
+    .port-state {
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .os-fingerprint {
+      background: var(--bg-primary);
+      padding: 16px;
+      border-radius: var(--radius-sm);
+      font-family: 'Fira Code', monospace;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.8;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-primary); }
+    ::-webkit-scrollbar-thumb { background: var(--bg-tertiary); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--border-color); }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card, .info-card, .history-item {
+      animation: fadeIn 0.3s ease-out;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="logo">
+        <div class="logo-icon">🔍</div>
+        <h2>Nmap Pro</h2>
+      </div>
+      <nav class="nav-menu">
+        <button class="nav-item active" data-tab="scan">
+          <span class="nav-icon">📡</span> New Scan
+        </button>
+        <button class="nav-item" data-tab="results">
+          <span class="nav-icon">📊</span> Results
+        </button>
+        <button class="nav-item" data-tab="hosts">
+          <span class="nav-icon">🌐</span> Host Discovery
+        </button>
+        <button class="nav-item" data-tab="ports">
+          <span class="nav-icon">🔌</span> Port Scanning
+        </button>
+        <button class="nav-item" data-tab="scripts">
+          <span class="nav-icon">📜</span> NSE Scripts
+        </button>
+        <button class="nav-item" data-tab="evasion">
+          <span class="nav-icon">🥷</span> Evasion
+        </button>
+        <button class="nav-item" data-tab="history">
+          <span class="nav-icon">📚</span> Scan History
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="status-indicator online"></div>
+        <span>Ready to Scan</span>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Header -->
+      <header class="top-bar">
+        <h1 id="page-title">New Network Scan</h1>
+        <div class="top-actions">
+          <button class="btn btn-secondary" id="clear-btn">Clear</button>
+          <button class="btn btn-primary" id="run-scan-btn">
+            <span class="btn-icon">▶</span> Run Scan
+          </button>
+        </div>
+      </header>
+
+      <!-- Tab: New Scan -->
+      <div class="tab-content active" id="tab-scan">
+        <div class="scan-builder">
+          <!-- Target Section -->
+          <div class="card">
+            <div class="card-header">
+              <h3>🎯 Target Specification</h3>
+            </div>
+            <div class="card-body">
+              <div class="form-group">
+                <label>Target Host(s)</label>
+                <input type="text" class="form-input" id="target-input" placeholder="e.g. scanme.nmap.org, 192.168.1.0/24, 10.0.0.1-50">
+                <span class="input-hint">Supports: IP, CIDR, ranges, hostnames, comma-separated list</span>
+              </div>
+              <div class="form-row" id="ping-ports-row" style="display:none;">
+                <div class="form-group">
+                  <label>Ping Ports (comma-separated)</label>
+                  <input type="text" class="form-input" id="ping-ports" value="22,80,443,8080">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Host Discovery -->
+          <div class="card">
+            <div class="card-header">
+              <h3>🔍 Host Discovery</h3>
+              <div class="toggle-group">
+                <span class="toggle-label">Enable</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="host-discovery-toggle" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+            <div class="card-body" id="host-discovery-body">
+              <div class="options-grid">
+                <label class="option-card active">
+                  <input type="radio" name="host-disc" value="-sn" checked>
+                  <div class="option-title">Ping Sweep (-sn)</div>
+                  <div class="option-desc">Find live hosts only, no port scan</div>
+                  <span class="badge badge-recommended">Fast</span>
+                </label>
+                <label class="option-card">
+                  <input type="radio" name="host-disc" value="-Pn">
+                  <div class="option-title">Skip Discovery (-Pn)</div>
+                  <div class="option-desc">Treat all targets as online</div>
+                </label>
+                <label class="option-card">
+                  <input type="radio" name="host-disc" value="-PS">
+                  <div class="option-title">TCP SYN Ping (-PS)</div>
+                  <div class="option-desc">Probe specific TCP ports</div>
+                </label>
+                <label class="option-card">
+                  <input type="radio" name="host-disc" value="-PA">
+                  <div class="option-title">TCP ACK Ping (-PA)</div>
+                  <div class="option-desc">Bypass stateless firewalls</div>
+                </label>
+                <label class="option-card">
+                  <input type="radio" name="host-disc" value="-PU">
+                  <div class="option-title">UDP Ping (-PU)</div>
+                  <div class="option-desc">Useful when TCP blocked</div>
+                </label>
+                <label class="option-card">
+                  <input type="radio" name="host-disc" value="-PR">
+                  <div class="option-title">ARP Ping (-PR)</div>
+                  <div class="option-desc">Fastest for local networks</div>
+                  <span class="badge badge-recommended">Local</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Port Scanning -->
+          <div class="card">
+            <div class="card-header">
+              <h3>🔌 Port Scanning Technique</h3>
+            </div>
+            <div class="card-body">
+              <div class="options-grid">
+                <label class="option-card active">
+                  <input type="radio" name="scan-type" value="-sS" checked>
+                  <div class="option-title">TCP SYN (-sS)</div>
+                  <div class="option-desc">Half-open, stealthy, requires root</div>
+                  <span class="badge badge-recommended">Default</span>
+                </label>
+                <label class="option-card">
+                  <input type="radio" name="scan-type" value="-sT">
+                  <div class="option-title">TCP Connect (-sT)</div>
+                  <div class="option-desc">Full handshake, no root needed</div>
+                </label>
+                <label class="option-card">
+                  <input type="radio" name="scan-type" value="-sU">
+                  <div class="option-title">UDP Scan (-sU)</div>
+                  <div class="option-desc">Check UDP services, very slow</div>
+                </label>
+                <label class="option-card">
+                  <input type="radio" name="scan-type" value="-sA">
+                  <div class="option-title">TCP ACK (-sA)</div>
+                  <div class="option-desc">Map firewall rules</div>
+                </label>
+                <label class="option-card">
+                  <input type="radio" name="scan-type" value="-sN">
+                  <div class="option-title">Null Scan (-sN)</div>
+                  <div class="option-desc">No flags set, evade simple filters</div>
+                </label>
+                <label class="option-card">
+                  <input type="radio" name="scan-type" value="-sF">
+                  <div class="option-title">FIN Scan (-sF)</div>
+                  <div class="option-desc">FIN flag only, stealthy</div>
+                </label>
+                <label class="option-card">
+                  <input type="radio" name="scan-type" value="-sX">
+                  <div class="option-title">Xmas Scan (-sX)</div>
+                  <div class="option-desc">FIN, PSH, URG flags set</div>
+                </label>
+                <label class="option-card">
+                  <input type="radio" name="scan-type" value="-sI">
+                  <div class="option-title">Idle Scan (-sI)</div>
+                  <div class="option-desc">Zombie host relay, ultimate stealth</div>
+                  <span class="badge" style="background:var(--accent-danger);color:white;">Advanced</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Port Specification -->
+          <div class="card">
+            <div class="card-header">
+              <h3>🚪 Port Specification</h3>
+            </div>
+            <div class="card-body">
+              <div class="options-grid">
+                <label class="option-card active">
+                  <input type="radio" name="port-spec" value="--top-ports 100" checked>
+                  <div class="option-title">Top 100 Ports</div>
+                  <div class="option-desc">Fast scan of most common ports</div>
+                  <span class="badge badge-recommended">Quick</span>
+                </label>
+                <label class="option-card">
+                  <input type="radio" name="port-spec" value="-F">
+                  <div class="option-title">Fast Mode (-F)</div>
+                  <div class="option-desc">Top 100 ports only</div>
+                </label>
+                <label class="option-card">
+                  <input type="radio" name="port-spec" value="-p-">
+                  <div class="option-title">All Ports (-p-)</div>
+                  <div class="option-desc">Scan all 65,535 ports</div>
+                  <span class="badge" style="background:var(--accent-warning);color:white;">Thorough</span>
+                </label>
+                <label class="option-card">
+                  <input type="radio" name="port-spec" value="custom">
+                  <div class="option-title">Custom Range</div>
+                  <div class="option-desc">Specify your own ports</div>
+                </label>
+              </div>
+              <div class="form-group" id="custom-ports-group" style="display:none; margin-top:16px;">
+                <label>Custom Ports</label>
+                <input type="text" class="form-input" id="custom-ports" placeholder="e.g. 22,80,443,8080-8090">
+              </div>
+            </div>
+          </div>
+
+          <!-- Service Detection -->
+          <div class="card">
+            <div class="card-header">
+              <h3>🔎 Service & Version Detection</h3>
+            </div>
+            <div class="card-body">
+              <div class="checkbox-grid">
+                <label class="check-card active">
+                  <input type="checkbox" name="service" value="-sV" checked>
+                  <div class="check-icon">✓</div>
+                  <div class="check-title">Service Version (-sV)</div>
+                  <div class="check-desc">Identify service names and versions</div>
+                </label>
+                <label class="check-card">
+                  <input type="checkbox" name="service" value="-O">
+                  <div class="check-icon">✓</div>
+                  <div class="check-title">OS Detection (-O)</div>
+                  <div class="check-desc">Fingerprint target operating system</div>
+                </label>
+                <label class="check-card">
+                  <input type="checkbox" name="service" value="-A">
+                  <div class="check-icon">✓</div>
+                  <div class="check-title">Aggressive (-A)</div>
+                  <div class="check-desc">OS + version + scripts + traceroute</div>
+                </label>
+                <label class="check-card">
+                  <input type="checkbox" name="service" value="--version-all">
+                  <div class="check-icon">✓</div>
+                  <div class="check-title">Version All</div>
+                  <div class="check-desc">Try every probe (intensity 9)</div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- NSE Scripts -->
+          <div class="card">
+            <div class="card-header">
+              <h3>📜 NSE Script Categories</h3>
+            </div>
+            <div class="card-body">
+              <div class="script-categories">
+                <label class="script-chip active">
+                  <input type="checkbox" name="script" value="default" checked>
+                  <span>✓</span> Default (-sC)
+                </label>
+                <label class="script-chip">
+                  <input type="checkbox" name="script" value="safe">
+                  <span>✓</span> Safe
+                </label>
+                <label class="script-chip">
+                  <input type="checkbox" name="script" value="intrusive">
+                  <span>✓</span> Intrusive
+                </label>
+                <label class="script-chip">
+                  <input type="checkbox" name="script" value="vuln">
+                  <span>✓</span> Vulnerability
+                </label>
+                <label class="script-chip">
+                  <input type="checkbox" name="script" value="exploit">
+                  <span>✓</span> Exploit
+                </label>
+                <label class="script-chip">
+                  <input type="checkbox" name="script" value="auth">
+                  <span>✓</span> Auth
+                </label>
+                <label class="script-chip">
+                  <input type="checkbox" name="script" value="discovery">
+                  <span>✓</span> Discovery
+                </label>
+                <label class="script-chip">
+                  <input type="checkbox" name="script" value="malware">
+                  <span>✓</span> Malware
+                </label>
+              </div>
+              <div class="form-group" style="margin-top:16px;">
+                <label>Custom Scripts (comma-separated)</label>
+                <input type="text" class="form-input" id="custom-scripts" placeholder="e.g. http-enum,smb-enum-shares">
+              </div>
+            </div>
+          </div>
+
+          <!-- Timing -->
+          <div class="card">
+            <div class="card-header">
+              <h3>⏱️ Timing & Performance</h3>
+            </div>
+            <div class="card-body">
+              <div class="timing-selector">
+                <label class="timing-option" data-timing="-T0">
+                  <div class="timing-name">Paranoid</div>
+                  <div class="timing-speed">🐢</div>
+                  <div class="timing-desc">1 pkt / 5 min</div>
+                </label>
+                <label class="timing-option" data-timing="-T1">
+                  <div class="timing-name">Sneaky</div>
+                  <div class="timing-speed">🐌</div>
+                  <div class="timing-desc">Very slow</div>
+                </label>
+                <label class="timing-option" data-timing="-T2">
+                  <div class="timing-name">Polite</div>
+                  <div class="timing-speed">🚶</div>
+                  <div class="timing-desc">Reduced bandwidth</div>
+                </label>
+                <label class="timing-option active" data-timing="-T3">
+                  <div class="timing-name">Normal</div>
+                  <div class="timing-speed">🏃</div>
+                  <div class="timing-desc">Balanced default</div>
+                </label>
+                <label class="timing-option" data-timing="-T4">
+                  <div class="timing-name">Aggressive</div>
+                  <div class="timing-speed">🚀</div>
+                  <div class="timing-desc">Fast, standard for pentest</div>
+                  <span class="badge badge-recommended">Best</span>
+                </label>
+                <label class="timing-option" data-timing="-T5">
+                  <div class="timing-name">Insane</div>
+                  <div class="timing-speed">⚡</div>
+                  <div class="timing-desc">Fastest, may miss ports</div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Evasion -->
+          <div class="card">
+            <div class="card-header">
+              <h3>🥷 Firewall/IDS Evasion</h3>
+            </div>
+            <div class="card-body">
+              <div class="checkbox-grid">
+                <label class="check-card">
+                  <input type="checkbox" name="evasion" value="-f">
+                  <div class="check-icon">✓</div>
+                  <div class="check-title">Fragment Packets (-f)</div>
+                  <div class="check-desc">Split into 8-byte fragments</div>
+                </label>
+                <label class="check-card">
+                  <input type="checkbox" name="evasion" value="--mtu">
+                  <div class="check-icon">✓</div>
+                  <div class="check-title">Custom MTU</div>
+                  <div class="check-desc">Specify fragment size</div>
+                </label>
+                <label class="check-card">
+                  <input type="checkbox" name="evasion" value="-D">
+                  <div class="check-icon">✓</div>
+                  <div class="check-title">Decoys (-D)</div>
+                  <div class="check-desc">Hide among fake hosts</div>
+                </label>
+                <label class="check-card">
+                  <input type="checkbox" name="evasion" value="-S">
+                  <div class="check-icon">✓</div>
+                  <div class="check-title">Spoof Source (-S)</div>
+                  <div class="check-desc">Fake source IP address</div>
+                </label>
+                <label class="check-card">
+                  <input type="checkbox" name="evasion" value="-g">
+                  <div class="check-icon">✓</div>
+                  <div class="check-title">Source Port (-g)</div>
+                  <div class="check-desc">Use trusted port (e.g. 53)</div>
+                </label>
+                <label class="check-card">
+                  <input type="checkbox" name="evasion" value="--data-length">
+                  <div class="check-icon">✓</div>
+                  <div class="check-title">Data Length</div>
+                  <div class="check-desc">Add random padding</div>
+                </label>
+                <label class="check-card">
+                  <input type="checkbox" name="evasion" value="--randomize-hosts">
+                  <div class="check-icon">✓</div>
+                  <div class="check-title">Randomize Hosts</div>
+                  <div class="check-desc">Shuffle scan order</div>
+                </label>
+                <label class="check-card">
+                  <input type="checkbox" name="evasion" value="--spoof-mac">
+                  <div class="check-icon">✓</div>
+                  <div class="check-title">Spoof MAC</div>
+                  <div class="check-desc">Randomize MAC address</div>
+                </label>
+              </div>
+              <div class="form-row" id="decoy-row" style="display:none;">
+                <div class="form-group">
+                  <label>Decoy Hosts (comma-separated)</label>
+                  <input type="text" class="form-input" id="decoy-hosts" value="RND:5" placeholder="e.g. 192.168.1.10,ME,192.168.1.20">
+                </div>
+              </div>
+              <div class="form-row" id="source-port-row" style="display:none;">
+                <div class="form-group">
+                  <label>Source Port</label>
+                  <input type="text" class="form-input" id="source-port" value="53" placeholder="e.g. 53">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Output -->
+          <div class="card">
+            <div class="card-header">
+              <h3>💾 Output Options</h3>
+            </div>
+            <div class="card-body">
+              <div class="checkbox-grid">
+                <label class="check-card active">
+                  <input type="checkbox" name="output" value="-oN" checked>
+                  <div class="check-icon">✓</div>
+                  <div class="check-title">Normal Output (-oN)</div>
+                  <div class="check-desc">Human-readable text file</div>
+                </label>
+                <label class="check-card">
+                  <input type="checkbox" name="output" value="-oX">
+                  <div class="check-icon">✓</div>
+                  <div class="check-title">XML Output (-oX)</div>
+                  <div class="check-desc">Machine-parseable XML</div>
+                </label>
+                <label class="check-card">
+                  <input type="checkbox" name="output" value="-oG">
+                  <div class="check-icon">✓</div>
+                  <div class="check-title">Grepable (-oG)</div>
+                  <div class="check-desc">Grep-friendly format</div>
+                </label>
+                <label class="check-card active">
+                  <input type="checkbox" name="output" value="-oA" checked>
+                  <div class="check-icon">✓</div>
+                  <div class="check-title">All Formats (-oA)</div>
+                  <div class="check-desc">Normal, XML, and grepable</div>
+                  <span class="badge badge-recommended">Best</span>
+                </label>
+              </div>
+              <div class="form-group" style="margin-top:16px;">
+                <label>Output Filename</label>
+                <input type="text" class="form-input" id="output-file" value="scan_results" placeholder="e.g. scan_results">
+              </div>
+            </div>
+          </div>
+
+          <!-- Command Preview -->
+          <div class="command-preview-card">
+            <div class="command-header">
+              <h3>🖥️ Generated Command</h3>
+              <button class="btn btn-sm btn-secondary" id="copy-cmd-btn">📋 Copy</button>
+            </div>
+            <div class="command-box" id="command-preview">nmap -sS -sV --top-ports 100 -T3 scanme.nmap.org</div>
+            <div class="command-meta">
+              <span class="meta-tag" id="cmd-root">Root: No</span>
+              <span class="meta-tag" id="cmd-est-time">Est. Time: ~15 sec</span>
+              <span class="meta-tag" id="cmd-stealth">Stealth: Medium</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Results -->
+      <div class="tab-content" id="tab-results">
+        <div class="results-container">
+          <div class="results-header">
+            <h2>Scan Results</h2>
+            <div class="results-actions">
+              <button class="btn btn-secondary" id="export-results-btn">📥 Export</button>
+              <button class="btn btn-secondary" id="compare-results-btn">📊 Compare</button>
+            </div>
+          </div>
+          <div class="results-placeholder" id="results-placeholder">
+            <div class="placeholder-icon">📊</div>
+            <h3>No Scan Results Yet</h3>
+            <p>Run a scan to see results here. Results will include host status, open ports, services, and OS detection.</p>
+          </div>
+          <div class="results-content" id="results-content" style="display:none;">
+            <div class="results-summary">
+              <div class="summary-card">
+                <div class="summary-value" id="res-hosts-up">0</div>
+                <div class="summary-label">Hosts Up</div>
+              </div>
+              <div class="summary-card">
+                <div class="summary-value" id="res-open-ports">0</div>
+                <div class="summary-label">Open Ports</div>
+              </div>
+              <div class="summary-card">
+                <div class="summary-value" id="res-services">0</div>
+                <div class="summary-label">Services</div>
+              </div>
+              <div class="summary-card">
+                <div class="summary-value" id="res-vulns">0</div>
+                <div class="summary-label">Vulnerabilities</div>
+              </div>
+            </div>
+            <div class="results-table-container">
+              <table class="results-table">
+                <thead>
+                  <tr>
+                    <th>Host</th>
+                    <th>State</th>
+                    <th>Open Ports</th>
+                    <th>OS</th>
+                    <th>Services</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="results-tbody">
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Host Discovery -->
+      <div class="tab-content" id="tab-hosts">
+        <div class="info-panel">
+          <h2>🔍 Host Discovery Techniques</h2>
+          <p class="panel-desc">Before scanning ports, identify which hosts are alive on the network. Choose the right technique based on your target environment.</p>
+          <div class="info-grid">
+            <div class="info-card featured">
+              <div class="info-icon">📡</div>
+              <h4>Ping Sweep (-sn)</h4>
+              <p>Fastest way to find live hosts. Sends ICMP echo requests and TCP ACK probes to determine if a host is online without port scanning.</p>
+              <code>nmap -sn 192.168.1.0/24</code>
+            </div>
+            <div class="info-card">
+              <div class="info-icon">🚫</div>
+              <h4>Skip Discovery (-Pn)</h4>
+              <p>Treat all targets as online. Use when ICMP is blocked by firewalls or when you know targets are up but don't respond to pings.</p>
+              <code>nmap -Pn target.com</code>
+            </div>
+            <div class="info-card">
+              <div class="info-icon">🔌</div>
+              <h4>TCP SYN Ping (-PS)</h4>
+              <p>Sends empty TCP SYN packets to specified ports. If SYN-ACK or RST received, host is up. Bypasses ICMP-blocking firewalls.</p>
+              <code>nmap -PS22,80,443 target.com</code>
+            </div>
+            <div class="info-card">
+              <div class="info-icon">📤</div>
+              <h4>TCP ACK Ping (-PA)</h4>
+              <p>Sends TCP ACK packets. Useful for bypassing stateless firewalls that block SYN but allow established connections.</p>
+              <code>nmap -PA80,443 target.com</code>
+            </div>
+            <div class="info-card">
+              <div class="info-icon">📨</div>
+              <h4>UDP Ping (-PU)</h4>
+              <p>Sends UDP packets to specified ports. ICMP port unreachable indicates closed port; no response may mean open or filtered.</p>
+              <code>nmap -PU53,161 target.com</code>
+            </div>
+            <div class="info-card">
+              <div class="info-icon">🏠</div>
+              <h4>ARP Ping (-PR)</h4>
+              <p>Fastest method for local Ethernet networks. Requires root privileges. Nmap uses ARP automatically for local targets.</p>
+              <code>sudo nmap -PR 192.168.1.0/24</code>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Port Scanning -->
+      <div class="tab-content" id="tab-ports">
+        <div class="info-panel">
+          <h2>🔌 Port Scanning Techniques</h2>
+          <p class="panel-desc">Different scan types trade off between speed, stealth, and accuracy. Select based on your target's defenses and your privileges.</p>
+          <div class="info-grid">
+            <div class="info-card featured">
+              <div class="info-icon">⚡</div>
+              <h4>TCP SYN Scan (-sS)</h4>
+              <p>The default and most popular scan. Sends SYN, receives SYN-ACK, then sends RST instead of completing handshake. Fast and stealthy.</p>
+              <code>sudo nmap -sS target.com</code>
+            </div>
+            <div class="info-card">
+              <div class="info-icon">🔗</div>
+              <h4>TCP Connect Scan (-sT)</h4>
+              <p>Completes full 3-way handshake via OS connect() system call. Use when you lack root privileges. Easily logged by target.</p>
+              <code>nmap -sT target.com</code>
+            </div>
+            <div class="info-card">
+              <div class="info-icon">📻</div>
+              <h4>UDP Scan (-sU)</h4>
+              <p>Checks UDP services like DNS, SNMP, DHCP. Very slow because many ports return ICMP unreachable. Often combined with TCP scans.</p>
+              <code>sudo nmap -sU -p 53,161,500 target.com</code>
+            </div>
+            <div class="info-card">
+              <div class="info-icon">🧱</div>
+              <h4>TCP ACK Scan (-sA)</h4>
+              <p>Never determines open ports. Instead, maps firewall rulesets by distinguishing stateful (drop) vs stateless (reject) filters.</p>
+              <code>sudo nmap -sA target.com</code>
+            </div>
+            <div class="info-card">
+              <div class="info-icon">👻</div>
+              <h4>Null / FIN / Xmas Scans</h4>
+              <p>Exploit RFC 793 loopholes. Null (-sN) sends no flags; FIN (-sF) sends FIN; Xmas (-sX) sends FIN+PSH+URG. Stealthy but unreliable on Windows.</p>
+              <code>sudo nmap -sF target.com</code>
+            </div>
+            <div class="info-card">
+              <div class="info-icon">🎭</div>
+              <h4>Idle Scan (-sI)</h4>
+              <p>Ultimate stealth scan. Bounces scan off a "zombie" host. Your IP never appears in target logs. Requires finding suitable zombie.</p>
+              <code>sudo nmap -sI zombie_host target.com</code>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: NSE Scripts -->
+      <div class="tab-content" id="tab-scripts">
+        <div class="info-panel">
+          <h2>📜 Nmap Scripting Engine (NSE)</h2>
+          <p class="panel-desc">NSE transforms Nmap from a port scanner into a vulnerability assessment tool. Scripts are categorized by safety and purpose.</p>
+          <div class="info-grid">
+            <div class="info-card featured">
+              <div class="info-icon">🛡️</div>
+              <h4>Safe Scripts</h4>
+              <p>Cannot crash services or exploit vulnerabilities. Good for routine scanning and service enumeration without risk.</p>
+              <code>nmap --script safe target.com</code>
+            </div>
+            <div class="info-card">
+              <div class="info-icon">⚠️</div>
+              <h4>Intrusive Scripts</h4>
+              <p>May crash services or trigger IDS alerts. Use with caution on production systems. Includes brute-force and exploitation attempts.</p>
+              <code>nmap --script intrusive target.com</code>
+            </div>
+            <div class="info-card">
+              <div class="info-icon">🐛</div>
+              <h4>Vulnerability Scripts</h4>
+              <p>Check for known CVEs and common misconfigurations. Essential for security assessments. May trigger security tools.</p>
+              <code>nmap --script vuln target.com</code>
+            </div>
+            <div class="info-card">
+              <div class="info-icon">💥</div>
+              <h4>Exploit Scripts</h4>
+              <p>Actually attempt to exploit vulnerabilities. High risk of crashing services. Only use on systems you own or have explicit permission to test.</p>
+              <code>nmap --script exploit target.com</code>
+            </div>
+            <div class="info-card">
+              <div class="info-icon">🔐</div>
+              <h4>Auth Scripts</h4>
+              <p>Test authentication mechanisms. Check for default credentials, weak passwords, and authentication bypasses.</p>
+              <code>nmap --script auth target.com</code>
+            </div>
+            <div class="info-card">
+              <div class="info-icon">🔍</div>
+              <h4>Discovery Scripts</h4>
+              <p>Enumerate network resources, users, shares, and services. Great for internal reconnaissance and mapping.</p>
+              <code>nmap --script discovery target.com</code>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Evasion -->
+      <div class="tab-content" id="tab-evasion">
+        <div class="info-panel">
+          <h2>🥷 Firewall & IDS Evasion</h2>
+          <p class="panel-desc">When scanning hardened targets, these techniques help avoid detection by firewalls, IDS, and logging systems.</p>
+          <div class="info-grid">
+            <div class="info-card featured">
+              <div class="info-icon">🧩</div>
+              <h4>Packet Fragmentation (-f)</h4>
+              <p>Splits probe packets into tiny 8-byte fragments. Many simple packet filters and IDS can't reassemble fragments, allowing probes through.</p>
+              <code>sudo nmap -f target.com</code>
+            </div>
+            <div class="info-card">
+              <div class="info-icon">🎭</div>
+              <h4>Decoy Scanning (-D)</h4>
+              <p>Hide your real IP among decoy hosts. Target logs show scans from multiple IPs, making it hard to identify the real scanner.</p>
+              <code>sudo nmap -D RND:5,ME target.com</code>
+            </div>
+            <div class="info-card">
+              <div class="info-icon">🎪</div>
+              <h4>Source IP Spoofing (-S)</h4>
+              <p>Spoof your source IP address. Useful when you control a network that the target routes back to you (rarely practical on internet).</p>
+              <code>sudo nmap -S 192.168.1.100 target.com</code>
+            </div>
+            <div class="info-card">
+              <div class="info-icon">🔢</div>
+              <h4>Source Port (-g)</h4>
+              <p>Use a trusted source port like 53 (DNS) or 20 (FTP data). Some firewalls allow all traffic from these "trusted" ports.</p>
+              <code>sudo nmap -g 53 target.com</code>
+            </div>
+            <div class="info-card">
+              <div class="info-icon">📏</div>
+              <h4>Random Data Length</h4>
+              <p>Add random padding to packets to change their size. Helps evade signature-based detection that looks for specific packet sizes.</p>
+              <code>sudo nmap --data-length 50 target.com</code>
+            </div>
+            <div class="info-card">
+              <div class="info-icon">🔀</div>
+              <h4>Randomize & Spoof</h4>
+              <p>Shuffle scan order and randomize MAC address to avoid pattern detection and MAC-based filtering on local networks.</p>
+              <code>sudo nmap --randomize-hosts --spoof-mac 0 target.com</code>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: History -->
+      <div class="tab-content" id="tab-history">
+        <div class="history-container">
+          <h2>📚 Scan History</h2>
+          <div class="history-list" id="history-list">
+            <div class="history-empty">
+              <div class="placeholder-icon">📚</div>
+              <h3>No Scan History</h3>
+              <p>Your completed scans will appear here with timestamps and results.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Scan Progress Modal -->
+  <div class="modal-overlay" id="scan-modal" style="display:none;">
+    <div class="modal scan-modal">
+      <div class="modal-header">
+        <h3>🔍 Scanning in Progress</h3>
+        <button class="modal-close" id="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="scan-target" id="modal-target">Target: scanme.nmap.org</div>
+        <div class="progress-bar-container">
+          <div class="progress-bar" id="scan-progress"></div>
+        </div>
+        <div class="scan-status" id="scan-status">Initializing scan...</div>
+        <div class="scan-log" id="scan-log">
+          <div class="log-line">[INFO] Starting Nmap 7.94</div>
+          <div class="log-line">[INFO] Loaded 600+ NSE scripts</div>
+        </div>
+        <div class="scan-stats">
+          <div class="stat">
+            <span class="stat-label">Hosts Scanned:</span>
+            <span class="stat-value" id="stat-hosts">0/1</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Ports Checked:</span>
+            <span class="stat-value" id="stat-ports">0/65535</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Elapsed Time:</span>
+            <span class="stat-value" id="stat-time">0s</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-danger" id="cancel-scan-btn">Cancel Scan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Host Detail Modal -->
+  <div class="modal-overlay" id="detail-modal" style="display:none;">
+    <div class="modal detail-modal">
+      <div class="modal-header">
+        <h3>🖥️ Host Details</h3>
+        <button class="modal-close" id="detail-close">&times;</button>
+      </div>
+      <div class="modal-body" id="detail-body">
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State
+    let scanHistory = [];
+    let currentScan = null;
+    let scanResults = [];
+    let selectedTiming = '-T3';
+
+    // Demo data for simulation
+    const demoServices = {
+      22: { name: 'ssh', version: 'OpenSSH 8.9p1 Ubuntu 3ubuntu0.6', state: 'open' },
+      80: { name: 'http', version: 'Apache httpd 2.4.52', state: 'open' },
+      443: { name: 'https', version: 'Apache httpd 2.4.52 (OpenSSL/3.0.2)', state: 'open' },
+      3306: { name: 'mysql', version: 'MySQL 8.0.32', state: 'filtered' },
+      8080: { name: 'http-proxy', version: 'nginx 1.18.0', state: 'open' },
+      53: { name: 'domain', version: 'BIND 9.18.12', state: 'open' },
+      21: { name: 'ftp', version: 'vsftpd 3.0.5', state: 'open' },
+      25: { name: 'smtp', version: 'Postfix 3.6.4', state: 'filtered' },
+      110: { name: 'pop3', version: 'Dovecot 2.3.16', state: 'closed' },
+      143: { name: 'imap', version: 'Dovecot 2.3.16', state: 'closed' },
+      445: { name: 'microsoft-ds', version: 'Samba 4.15.13', state: 'open' },
+      3389: { name: 'ms-wbt-server', version: 'xrdp 0.9.17', state: 'filtered' }
+    };
+
+    const demoOS = [
+      { name: 'Linux 5.15', accuracy: 95, family: 'Linux' },
+      { name: 'Windows 10', accuracy: 88, family: 'Windows' },
+      { name: 'FreeBSD 13.2', accuracy: 72, family: 'BSD' }
+    ];
+
+    // Tab Navigation
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', () => {
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        item.classList.add('active');
+        document.getElementById('tab-' + item.dataset.tab).classList.add('active');
+        document.getElementById('page-title').textContent = item.textContent.trim();
+      });
+    });
+
+    // Host Discovery Toggle
+    document.getElementById('host-discovery-toggle').addEventListener('change', function() {
+      const body = document.getElementById('host-discovery-body');
+      body.style.opacity = this.checked ? '1' : '0.3';
+      body.style.pointerEvents = this.checked ? 'auto' : 'none';
+      updateCommand();
+    });
+
+    // Option Cards
+    document.querySelectorAll('.option-card').forEach(card => {
+      card.addEventListener('click', function() {
+        const name = this.querySelector('input').name;
+        document.querySelectorAll(`.option-card input[name="${name}"]`).forEach(input => {
+          input.closest('.option-card').classList.remove('active');
+        });
+        this.classList.add('active');
+        this.querySelector('input').checked = true;
+        updateCommand();
+      });
+    });
+
+    // Check Cards
+    document.querySelectorAll('.check-card').forEach(card => {
+      card.addEventListener('click', function() {
+        const input = this.querySelector('input');
+        input.checked = !input.checked;
+        this.classList.toggle('active', input.checked);
+        updateCommand();
+      });
+    });
+
+    // Script Chips
+    document.querySelectorAll('.script-chip').forEach(chip => {
+      chip.addEventListener('click', function() {
+        const input = this.querySelector('input');
+        input.checked = !input.checked;
+        this.classList.toggle('active', input.checked);
+        updateCommand();
+      });
+    });
+
+    // Timing Options
+    document.querySelectorAll('.timing-option').forEach(opt => {
+      opt.addEventListener('click', function() {
+        document.querySelectorAll('.timing-option').forEach(o => o.classList.remove('active'));
+        this.classList.add('active');
+        selectedTiming = this.dataset.timing;
+        updateCommand();
+      });
+    });
+
+    // Evasion checkboxes show/hide extra fields
+    document.querySelectorAll('input[name="evasion"]').forEach(cb => {
+      cb.addEventListener('change', function() {
+        document.getElementById('decoy-row').style.display = 
+          document.querySelector('input[value="-D"]').checked ? 'flex' : 'none';
+        document.getElementById('source-port-row').style.display = 
+          document.querySelector('input[value="-g"]').checked ? 'flex' : 'none';
+        updateCommand();
+      });
+    });
+
+    // Port spec custom
+    document.query    // Port spec custom
+    document.querySelectorAll('input[name="port-spec"]').forEach(radio => {
+      radio.addEventListener('change', function() {
+        document.getElementById('custom-ports-group').style.display = 
+          this.value === 'custom' ? 'block' : 'none';
+        updateCommand();
+      });
+    });
+
+    // Custom ports input
+    document.getElementById('custom-ports').addEventListener('input', updateCommand);
+
+    // Custom scripts input
+    document.getElementById('custom-scripts').addEventListener('input', updateCommand);
+
+    // Output filename
+    document.getElementById('output-file').addEventListener('input', updateCommand);
+
+    // Target input
+    document.getElementById('target-input').addEventListener('input', updateCommand);
+
+    // Ping ports input
+    document.getElementById('ping-ports').addEventListener('input', updateCommand);
+
+    // Decoy hosts input
+    document.getElementById('decoy-hosts').addEventListener('input', updateCommand);
+
+    // Source port input
+    document.getElementById('source-port').addEventListener('input', updateCommand);
+
+    // ====== COMMAND GENERATOR ======
+    function updateCommand() {
+      let cmd = 'nmap';
+      let needsRoot = false;
+      let stealth = 'Medium';
+      let estTime = '~15 sec';
+
+      // Host Discovery
+      if (document.getElementById('host-discovery-toggle').checked) {
+        const hostDisc = document.querySelector('input[name="host-disc"]:checked');
+        if (hostDisc) {
+          const val = hostDisc.value;
+          if (val === '-PS' || val === '-PA' || val === '-PU') {
+            const ports = document.getElementById('ping-ports').value;
+            cmd += ` ${val}${ports}`;
+          } else {
+            cmd += ` ${val}`;
+          }
+        }
+      } else {
+        cmd += ' -Pn';
+      }
+
+      // Scan Type
+      const scanType = document.querySelector('input[name="scan-type"]:checked');
+      if (scanType) {
+        cmd += ` ${scanType.value}`;
+        if (['-sS', '-sU', '-sA', '-sN', '-sF', '-sX', '-sI'].includes(scanType.value)) {
+          needsRoot = true;
+        }
+        if (scanType.value === '-sI') stealth = 'Ultimate';
+        else if (['-sN', '-sF', '-sX'].includes(scanType.value)) stealth = 'High';
+        else if (scanType.value === '-sS') stealth = 'High';
+      }
+
+      // Port Spec
+      const portSpec = document.querySelector('input[name="port-spec"]:checked');
+      if (portSpec) {
+        if (portSpec.value === 'custom') {
+          const customPorts = document.getElementById('custom-ports').value;
+          if (customPorts) cmd += ` -p ${customPorts}`;
+        } else {
+          cmd += ` ${portSpec.value}`;
+        }
+      }
+
+      // Service Detection
+      document.querySelectorAll('input[name="service"]:checked').forEach(cb => {
+        cmd += ` ${cb.value}`;
+        if (cb.value === '-O') needsRoot = true;
+        if (cb.value === '--version-all') estTime = '~2 min';
+      });
+
+      // NSE Scripts
+      const scripts = [];
+      document.querySelectorAll('input[name="script"]:checked').forEach(cb => {
+        scripts.push(cb.value);
+      });
+      const customScripts = document.getElementById('custom-scripts').value;
+      if (customScripts) scripts.push(customScripts);
+      if (scripts.length > 0) {
+        if (scripts.includes('default')) {
+          cmd += ' -sC';
+          scripts.splice(scripts.indexOf('default'), 1);
+        }
+        if (scripts.length > 0) {
+          cmd += ` --script ${scripts.join(',')}`;
+        }
+      }
+
+      // Timing
+      cmd += ` ${selectedTiming}`;
+      if (selectedTiming === '-T0' || selectedTiming === '-T1') {
+        stealth = 'Ultimate';
+        estTime = '>1 hour';
+      } else if (selectedTiming === '-T2') {
+        stealth = 'High';
+        estTime = '~5 min';
+      } else if (selectedTiming === '-T4') {
+        stealth = 'Low';
+        estTime = '~10 sec';
+      } else if (selectedTiming === '-T5') {
+        stealth = 'Very Low';
+        estTime = '~5 sec';
+      }
+
+      // Evasion
+      document.querySelectorAll('input[name="evasion"]:checked').forEach(cb => {
+        const val = cb.value;
+        if (val === '-D') {
+          const decoyHosts = document.getElementById('decoy-hosts').value;
+          cmd += ` -D ${decoyHosts}`;
+          stealth = 'High';
+        } else if (val === '-S') {
+          cmd += ' -S 192.168.1.100';
+          needsRoot = true;
+        } else if (val === '-g') {
+          const srcPort = document.getElementById('source-port').value;
+          cmd += ` -g ${srcPort}`;
+          needsRoot = true;
+        } else if (val === '--data-length') {
+          cmd += ' --data-length 50';
+        } else if (val === '--spoof-mac') {
+          cmd += ' --spoof-mac 0';
+          needsRoot = true;
+        } else {
+          cmd += ` ${val}`;
+          if (val === '-f') needsRoot = true;
+        }
+      });
+
+      // Output
+      const outputFile = document.getElementById('output-file').value || 'scan_results';
+      document.querySelectorAll('input[name="output"]:checked').forEach(cb => {
+        if (cb.value === '-oA') {
+          cmd += ` -oA ${outputFile}`;
+        } else if (cb.value !== '-oN') {
+          cmd += ` ${cb.value} ${outputFile}.${cb.value.replace('-o', '')}`;
+        }
+      });
+
+      // Target
+      const target = document.getElementById('target-input').value || 'scanme.nmap.org';
+      cmd += ` ${target}`;
+
+      // Update UI
+      document.getElementById('command-preview').textContent = cmd;
+      document.getElementById('cmd-root').textContent = `Root: ${needsRoot ? 'Yes (sudo)' : 'No'}`;
+      document.getElementById('cmd-stealth').textContent = `Stealth: ${stealth}`;
+      document.getElementById('cmd-est-time').textContent = `Est. Time: ${estTime}`;
+    }
+
+    // Copy command
+    document.getElementById('copy-cmd-btn').addEventListener('click', function() {
+      const cmd = document.getElementById('command-preview').textContent;
+      navigator.clipboard.writeText(cmd).then(() => {
+        this.textContent = '✅ Copied!';
+        setTimeout(() => this.textContent = '📋 Copy', 2000);
+      });
+    });
+
+    // Clear button
+    document.getElementById('clear-btn').addEventListener('click', function() {
+      document.getElementById('target-input').value = '';
+      document.getElementById('custom-ports').value = '';
+      document.getElementById('custom-scripts').value = '';
+      document.getElementById('output-file').value = 'scan_results';
+      document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.checked = false;
+        cb.closest('.check-card, .script-chip')?.classList.remove('active');
+      });
+      document.querySelectorAll('input[type="radio"]').forEach(radio => radio.checked = false);
+      // Reset defaults
+      document.querySelector('input[value="-sS"]').checked = true;
+      document.querySelector('input[value="-sS"]').closest('.option-card').classList.add('active');
+      document.querySelector('input[value="-sn"]').checked = true;
+      document.querySelector('input[value="-sn"]').closest('.option-card').classList.add('active');
+      document.querySelector('input[value="--top-ports 100"]').checked = true;
+      document.querySelector('input[value="--top-ports 100"]').closest('.option-card').classList.add('active');
+      document.querySelector('input[value="-sV"]').checked = true;
+      document.querySelector('input[value="-sV"]').closest('.check-card').classList.add('active');
+      document.querySelector('input[value="default"]').checked = true;
+      document.querySelector('input[value="default"]').closest('.script-chip').classList.add('active');
+      document.querySelector('input[value="-oN"]').checked = true;
+      document.querySelector('input[value="-oN"]').closest('.check-card').classList.add('active');
+      document.querySelector('input[value="-oA"]').checked = true;
+      document.querySelector('input[value="-oA"]').closest('.check-card').classList.add('active');
+      selectedTiming = '-T3';
+      document.querySelectorAll('.timing-option').forEach(o => o.classList.remove('active'));
+      document.querySelector('[data-timing="-T3"]').classList.add('active');
+      updateCommand();
+    });
+
+    // ====== SCAN SIMULATION ======
+    document.getElementById('run-scan-btn').addEventListener('click', function() {
+      const target = document.getElementById('target-input').value || 'scanme.nmap.org';
+      const cmd = document.getElementById('command-preview').textContent;
+      
+      currentScan = {
+        target: target,
+        command: cmd,
+        startTime: new Date(),
+        status: 'running'
+      };
+
+      document.getElementById('modal-target').textContent = `Target: ${target}`;
+      document.getElementById('scan-modal').style.display = 'flex';
+      document.getElementById('scan-progress').style.width = '0%';
+      document.getElementById('scan-log').innerHTML = `
+        <div class="log-line">[INFO] Starting Nmap 7.94</div>
+        <div class="log-line">[INFO] Loaded 600+ NSE scripts</div>
+        <div class="log-line">[INFO] Command: ${cmd}</div>
+      `;
+      document.getElementById('scan-status').textContent = 'Initializing scan...';
+      
+      simulateScan();
+    });
+
+    function simulateScan() {
+      let progress = 0;
+      const logEl = document.getElementById('scan-log');
+      const statusEl = document.getElementById('scan-status');
+      const progressEl = document.getElementById('scan-progress');
+      const timeEl = document.getElementById('stat-time');
+      const portsEl = document.getElementById('stat-ports');
+      
+      const startTime = Date.now();
+      const totalPorts = 65535;
+      let checkedPorts = 0;
+
+      const logs = [
+        { msg: '[HOST] Host scanme.nmap.org is up (0.0023s latency)', type: 'success', delay: 500 },
+        { msg: '[PORT] 22/tcp open ssh OpenSSH 8.9p1', type: 'success', delay: 1200 },
+        { msg: '[PORT] 80/tcp open http Apache httpd 2.4.52', type: 'success', delay: 1800 },
+        { msg: '[PORT] 443/tcp open https Apache httpd 2.4.52 (OpenSSL/3.0.2)', type: 'success', delay: 2400 },
+        { msg: '[PORT] 8080/tcp open http-proxy nginx 1.18.0', type: 'success', delay: 3000 },
+        { msg: '[PORT] 53/tcp open domain BIND 9.18.12', type: 'success', delay: 3600 },
+        { msg: '[PORT] 21/tcp open ftp vsftpd 3.0.5', type: 'success', delay: 4200 },
+        { msg: '[PORT] 445/tcp open microsoft-ds Samba 4.15.13', type: 'success', delay: 4800 },
+        { msg: '[PORT] 3306/tcp filtered mysql', type: 'warn', delay: 5400 },
+        { msg: '[PORT] 25/tcp filtered smtp', type: 'warn', delay: 6000 },
+        { msg: '[PORT] 3389/tcp filtered ms-wbt-server', type: 'warn', delay: 6600 },
+        { msg: '[PORT] 110/tcp closed pop3', type: 'error', delay: 7200 },
+        { msg: '[PORT] 143/tcp closed imap', type: 'error', delay: 7800 },
+        { msg: '[OS] OS fingerprinting...', type: 'info', delay: 8400 },
+        { msg: '[OS] Aggressive OS guesses: Linux 5.15 (95%), Windows 10 (88%)', type: 'success', delay: 9000 },
+        { msg: '[NSE] Running scripts...', type: 'info', delay: 9600 },
+        { msg: '[NSE] http-title: Welcome to Nmap', type: 'success', delay: 10200 },
+        { msg: '[NSE] ssh-hostkey: RSA 2048 SHA256:abc123...', type: 'success', delay: 10800 },
+        { msg: '[DONE] Scan completed!', type: 'success', delay: 11400 }
+      ];
+
+      const interval = setInterval(() => {
+        progress += 2;
+        progressEl.style.width = `${Math.min(progress, 100)}%`;
+        checkedPorts = Math.floor((progress / 100) * totalPorts);
+        portsEl.textContent = `${checkedPorts}/${totalPorts}`;
+        timeEl.textContent = `${((Date.now() - startTime) / 1000).toFixed(1)}s`;
+
+        const nextLog = logs.find(l => l.delay <= (Date.now() - startTime) && !l.shown);
+        if (nextLog) {
+          nextLog.shown = true;
+          const div = document.createElement('div');
+          div.className = `log-line ${nextLog.type}`;
+          div.textContent = nextLog.msg;
+          logEl.appendChild(div);
+          logEl.scrollTop = logEl.scrollHeight;
+          statusEl.textContent = nextLog.msg;
+        }
+
+        if (progress >= 100) {
+          clearInterval(interval);
+          finishScan();
+        }
+      }, 100);
+    }
+
+    function finishScan() {
+      currentScan.status = 'completed';
+      currentScan.endTime = new Date();
+      currentScan.results = generateDemoResults();
+      scanHistory.unshift(currentScan);
+      updateHistory();
+      
+      setTimeout(() => {
+        document.getElementById('scan-modal').style.display = 'none';
+        showResults(currentScan.results);
+        document.querySelector('[data-tab="results"]').click();
+      }, 1000);
+    }
+
+    function generateDemoResults() {
+      const target = currentScan.target || 'scanme.nmap.org';
+      const openPorts = [22, 80, 443, 8080, 53, 21, 445];
+      const filteredPorts = [3306, 25, 3389];
+      const closedPorts = [110, 143];
+      
+      return [{
+        host: target,
+        ip: '45.33.32.156',
+        state: 'up',
+        os: 'Linux 5.15 (95%)',
+        openPorts: openPorts,
+        filteredPorts: filteredPorts,
+        closedPorts: closedPorts,
+        services: openPorts.map(p => ({ port: p, ...demoServices[p] })),
+        latency: '0.0023s'
+      }];
+    }
+
+    function showResults(results) {
+      document.getElementById('results-placeholder').style.display = 'none';
+      document.getElementById('results-content').style.display = 'block';
+      
+      const totalHosts = results.length;
+      const totalOpen = results.reduce((sum, r) => sum + r.openPorts.length, 0);
+      const totalServices = results.reduce((sum, r) => sum + r.services.length, 0);
+      const totalVulns = Math.floor(Math.random() * 3); // Simulated
+
+      document.getElementById('res-hosts-up').textContent = totalHosts;
+      document.getElementById('res-open-ports').textContent = totalOpen;
+      document.getElementById('res-services').textContent = totalServices;
+      document.getElementById('res-vulns').textContent = totalVulns;
+
+      const tbody = document.getElementById('results-tbody');
+      tbody.innerHTML = '';
+      
+      results.forEach(result => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>
+            <strong>${result.host}</strong><br>
+            <span style="color:var(--text-muted);font-size:12px;">${result.ip}</span>
+          </td>
+          <td><span class="host-state state-up">UP</span></td>
+          <td>${result.openPorts.length} open, ${result.filteredPorts.length} filtered</td>
+          <td>${result.os}</td>
+          <td>
+            ${result.services.slice(0, 3).map(s => `<span class="service-tag">${s.port}/${s.name}</span>`).join('')}
+            ${result.services.length > 3 ? `<span class="service-tag">+${result.services.length - 3}</span>` : ''}
+          </td>
+          <td>
+            <button class="action-btn" onclick="showHostDetails('${result.host}')">Details</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function showHostDetails(host) {
+      const result = scanResults.find(r => r.host === host) || generateDemoResults()[0];
+      const detailBody = document.getElementById('detail-body');
+      
+      detailBody.innerHTML = `
+        <div class="host-detail-header">
+          <div class="host-detail-icon">🖥️</div>
+          <div class="host-detail-info">
+            <h3>${result.host}</h3>
+            <p>${result.ip} | Latency: ${result.latency}</p>
+          </div>
+        </div>
+        
+        <div class="detail-section">
+          <h4>🚪 Open Ports (${result.openPorts.length})</h4>
+          <div class="port-list">
+            ${result.services.filter(s => s.state === 'open').map(s => `
+              <div class="port-item">
+                <div class="port-number">${s.port}/tcp</div>
+                <div class="port-service">
+                  <div class="port-service-name">${s.name}</div>
+                  <div class="port-service-version">${s.version}</div>
+                </div>
+                <span class="port-state state-up">OPEN</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        
+        <div class="detail-section">
+          <h4>🔒 Filtered Ports (${result.filteredPorts.length})</h4>
+          <div class="port-list">
+            ${result.filteredPorts.map(p => `
+              <div class="port-item filtered">
+                <div class="port-number">${p}/tcp</div>
+                <div class="port-service">
+                  <div class="port-service-name">${demoServices[p]?.name || 'unknown'}</div>
+                  <div class="port-service-version">Firewall/IDS blocking</div>
+                </div>
+                <span class="port-state state-filtered">FILTERED</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        
+        <div class="detail-section">
+          <h4>🖥️ OS Detection</h4>
+          <div class="os-fingerprint">
+            OS: ${result.os}<br>
+            Device type: general purpose<br>
+            Running: Linux 5.X<br>
+            OS CPE: cpe:/o:linux:linux_kernel:5.15<br>
+            OS details: Linux 5.15 - 5.19
+          </div>
+        </div>
+      `;
+      
+      document.getElementById('detail-modal').style.display = 'flex';
+    }
+
+    function updateHistory() {
+      const list = document.getElementById('history-list');
+      if (scanHistory.length === 0) return;
+      
+      list.innerHTML = scanHistory.map((scan, i) => `
+        <div class="history-item">
+          <div class="history-info">
+            <h4>${scan.target}</h4>
+            <div class="history-meta">
+              <span>⏱️ ${((scan.endTime - scan.startTime) / 1000).toFixed(1)}s</span>
+              <span>📅 ${scan.startTime.toLocaleTimeString()}</span>
+              <span>🔌 ${scan.results?.[0]?.openPorts?.length || 0} ports</span>
+            </div>
+          </div>
+          <span class="history-status status-${scan.status}">${scan.status.toUpperCase()}</span>
+        </div>
+      `).join('');
+    }
+
+    // Modal close handlers
+    document.getElementById('modal-close').addEventListener('click', () => {
+      document.getElementById('scan-modal').style.display = 'none';
+    });
+    document.getElementById('cancel-scan-btn').addEventListener('click', () => {
+      document.getElementById('scan-modal').style.display = 'none';
+      currentScan.status = 'cancelled';
+    });
+    document.getElementById('detail-close').addEventListener('click', () => {
+      document.getElementById('detail-modal').style.display = 'none';
+    });
+    document.getElementById('detail-modal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('detail-modal')) {
+        document.getElementById('detail-modal').style.display = 'none';
+      }
+    });
+
+    // Export results
+    document.getElementById('export-results-btn').addEventListener('click', function() {
+      const data = JSON.stringify(scanResults, null, 2);
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `nmap_scan_${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // Initialize
+    updateCommand();
+  </script>
+</body>
+</html>
