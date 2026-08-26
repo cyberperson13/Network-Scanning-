@@ -1,4 +1,4 @@
-# Nmap Pro - Network Scanner Dashboard
+# Nmam - Network Scanner Dashboard
 
 A modern, interactive web dashboard for configuring, generating, and simulating Nmap network scans. Built with pure HTML, CSS, and JavaScript – no external dependencies except for fonts.
 
